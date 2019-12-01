@@ -18,7 +18,7 @@
 volatile int f_wdt = 1;
 int LED = 13;             // the pin that the LED is atteched to
 int PIR = 2;              // the pin that the sensor is atteched to
-int wait =  round(30 * 60 / 8);       // wait time (min*60/8) if no motion after initial detection
+int wait =  round(15 * 60 / 8);       // wait time (min*60/8) if no motion after initial detection
 int counter = 0;
 bool Initialised = false;
 bool Motion = false;
