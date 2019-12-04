@@ -43,7 +43,13 @@ RF24 radio(9, 10); // NRF24L01 used SPI pins + Pin 9 and 10 on the NANO
 
 const byte address[6] = "00001";// Needs to be the same for communicating between 2 NRF24L01
 
+typedef struct {
+  int RC_no;
+  float Temperature;
+} Data;
 
+Data data={1,24.3};
+float temp=24.5;
 void setup(void) {
 
   pinMode(SwitchPin, INPUT_PULLUP); // Define the arcade switch NANO pin as an Input using Internal Pullup
@@ -57,10 +63,10 @@ void setup(void) {
 void loop(void) {
 
   if (digitalRead(SwitchPin) == LOW) { // If Switch is Activated
-    SentMessage[0] = 111;
+    data.Temperature = temp;
     Serial.println("on");
     digitalWrite(RelayPin, HIGH);
-    radio.write(SentMessage, 1); // Send value through NRF24L01
+    radio.write(&data, sizeof(data)); // Send value through NRF24L01
   }
   else {
     SentMessage[0] = 000;
