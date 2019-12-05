@@ -40,11 +40,10 @@
 #include "RF24.h"
 #include "SPI.h"
 
-#define NUM_LEDS 8 // Number of leds on stick
-#define LED_PIN 8 // Digital In (DI) of RGB Stick connected to pin 8 of the UNO
 typedef struct {
   int RC_no;
   float Temperature;
+  int Motion_no; // time count since last detection (no x 8 sec)
 } Data;
 
 Data data = {0, 0.0}; // Used to store value received by the NRF24L01
@@ -53,44 +52,39 @@ String Temp = " Temperature: ";
 String out;
 RF24 radio(9, 10); // NRF24L01 used SPI pins + Pin 9 and 10 on the UNO
 
-const byte address[6] = "00001"; // Needs to be the same for communicating between 2 NRF24L01
-
+const byte address_1[6] = "00001"; // Needs to be the same for communicating between 2 NRF24L01
+const byte address_2[6] = "00002"; // Needs to be the same for communicating between 2 NRF24L01
+const byte address_3[6] = "00003"; // Needs to be the same for communicating between 2 NRF24L01
 
 void setup(void) {
   Serial.begin(9600);
 
   radio.begin(); // Start the NRF24L01
 
-  radio.openReadingPipe(0, address); // Get NRF24L01 ready to receive
+  radio.openReadingPipe(1, address_1); // Get NRF24L01 ready to receive
+  radio.openReadingPipe(2, address_2); // Get NRF24L01 ready to receive
+  radio.openReadingPipe(3, address_3); // Get NRF24L01 ready to receive
 
   radio.startListening(); // Listen to see if information received
 
-  pinMode(LED_PIN, OUTPUT); // Set RGB Stick UNO pin to an OUTPUT
 }
 
 void loop(void) {
 
-  if (radio.available())
+  if (radio.available(address_1))
   {
     radio.read(&data, sizeof(data)); // Read information from the NRF24L01
-    Serial.println("Connected");
-    switch (data.RC_no)
-    {
-      case 0:
-        break;
-      case 1:
-      out = RC + data.RC_no + Temp + data.Temperature;
-      Serial.print(out);
-        break;
-      case 2:
-        break;
-    }
-
-    delay(10);
+    out = RC + data.RC_no + Temp + data.Temperature;
+    Serial.println(out);
+    if (data.Motion_no==0){Serial.println("motion");}
+    else {Serial.println("away");}
+    delay(8500);
   }
   else
   {
     Serial.println("Not Connected");
     data = {0, 0.0};
+    delay(8500);
   }
+  
 }

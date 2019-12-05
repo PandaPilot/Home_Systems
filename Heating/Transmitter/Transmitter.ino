@@ -34,9 +34,11 @@
 #include "nRF24L01.h" //NRF24L01 library created by TMRh20 https://github.com/TMRh20/RF24
 #include "RF24.h"
 #include "SPI.h"
+#include <avr/power.h>
+#include <avr/sleep.h>
+#include <avr/wdt.h>
 
-#define SwitchPin 8 // Arcade switch is connected to Pin 8 on NANO
-#define RelayPin 7
+#define PIR 8 // Arcade switch is connected to Pin 8 on NANO
 int SentMessage[1] = {000}; // Used to store value before being sent through the NRF24L01
 
 RF24 radio(9, 10); // NRF24L01 used SPI pins + Pin 9 and 10 on the NANO
@@ -46,32 +48,75 @@ const byte address[6] = "00001";// Needs to be the same for communicating betwee
 typedef struct {
   int RC_no;
   float Temperature;
+  int Motion_no; // time count since last detection (no x 8 sec)
 } Data;
 
-Data data={1,24.3};
-float temp=24.5;
+Data data = {1,24.3,0};
+float temp = 24.5;
+bool Motion = false;
+
+volatile int f_wdt = 1;
+
+ISR(WDT_vect)
+{
+  if (f_wdt == 0)
+  {
+    f_wdt = 1;
+  }
+}
+void sleeping()
+{
+  sleep_enable();
+  set_sleep_mode(SLEEP_MODE_PWR_DOWN);
+  sleep_mode();
+}
+
+
 void setup(void) {
 
-  pinMode(SwitchPin, INPUT_PULLUP); // Define the arcade switch NANO pin as an Input using Internal Pullup
-  pinMode(RelayPin, OUTPUT);
-  digitalWrite(SwitchPin, HIGH); // Set Pin to HIGH at beginning
   Serial.begin(9600);
   radio.begin(); // Start the NRF24L01
   radio.openWritingPipe(address); // Get NRF24L01 ready to transmit
+
+  power_adc_disable(); // ADC converter
+  //power_usart0_disable();// Serial (USART)
+  power_timer1_disable();// Timer 1
+  power_timer2_disable();// Timer 2
+  power_twi_disable(); // TWI (I2C)
+
+  /*** Setup the WDT ***/
+
+  /* Clear the reset flag. */
+  MCUSR &= ~(1 << WDRF);
+
+  /* In order to change WDE or the prescaler, we need to
+     set WDCE (This will allow updates for 4 clock cycles).
+  */
+  WDTCSR |= (1 << WDCE) | (1 << WDE);
+
+  /* set new watchdog timeout prescaler value */
+  WDTCSR = 1 << WDP0 | 1 << WDP3; /* 8.0 seconds */
+
+  /* Enable the WD interrupt (note no reset). */
+  WDTCSR |= _BV(WDIE);
 }
 
 void loop(void) {
 
-  if (digitalRead(SwitchPin) == LOW) { // If Switch is Activated
+  if (digitalRead(PIR) == HIGH) 
+  { // If Switch is Activated
     data.Temperature = temp;
-    Serial.println("on");
-    digitalWrite(RelayPin, HIGH);
+    data.Motion_no = 0;
+    //Serial.println("on");
+    radio.write(&data, sizeof(data)); // Send value through NRF24L01
+    Motion=true;
+  }
+  else if(Motion) 
+  {
+    data.Temperature = temp;
+    data.Motion_no = data.Motion_no+1;
     radio.write(&data, sizeof(data)); // Send value through NRF24L01
   }
-  else {
-    SentMessage[0] = 000;
-    radio.write(SentMessage, 1);
-    Serial.println("off");
-    digitalWrite(RelayPin, LOW);
-  }
+  //delay(100);
+  sleeping();
 }
