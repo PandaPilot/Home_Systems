@@ -55,7 +55,7 @@ RF24 radio(9, 10); // NRF24L01 used SPI pins + Pin 9 and 10 on the UNO
 const byte address_1[6] = "00001"; // Needs to be the same for communicating between 2 NRF24L01
 const byte address_2[6] = "00002"; // Needs to be the same for communicating between 2 NRF24L01
 const byte address_3[6] = "00003"; // Needs to be the same for communicating between 2 NRF24L01
-
+const byte address_out[6] = "00011";
 void setup(void) {
   Serial.begin(9600);
 
@@ -64,7 +64,7 @@ void setup(void) {
   radio.openReadingPipe(1, address_1); // Get NRF24L01 ready to receive
   radio.openReadingPipe(2, address_2); // Get NRF24L01 ready to receive
   radio.openReadingPipe(3, address_3); // Get NRF24L01 ready to receive
-
+  radio.openWritingPipe(address_out);
   radio.startListening(); // Listen to see if information received
 
 }

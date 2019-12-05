@@ -39,11 +39,13 @@
 #include <avr/wdt.h>
 
 #define PIR 8 // Arcade switch is connected to Pin 8 on NANO
+
 int SentMessage[1] = {000}; // Used to store value before being sent through the NRF24L01
 
 RF24 radio(9, 10); // NRF24L01 used SPI pins + Pin 9 and 10 on the NANO
 
-const byte address[6] = "00001";// Needs to be the same for communicating between 2 NRF24L01
+const byte address_out[6] = "00001";// Needs to be the same for communicating between 2 NRF24L01
+const byte address_in[6]  = "00011";
 
 typedef struct {
   int RC_no;
@@ -76,8 +78,9 @@ void setup(void) {
 
   Serial.begin(9600);
   radio.begin(); // Start the NRF24L01
-  radio.openWritingPipe(address); // Get NRF24L01 ready to transmit
-
+  radio.openWritingPipe(address_out); // Get NRF24L01 ready to transmit
+  radio.openReadingPipe(1, address_in); // Get NRF24L01 ready to receive
+  radio.startListening(); // Listen to see if information received
   power_adc_disable(); // ADC converter
   //power_usart0_disable();// Serial (USART)
   power_timer1_disable();// Timer 1
@@ -117,6 +120,6 @@ void loop(void) {
     data.Motion_no = data.Motion_no+1;
     radio.write(&data, sizeof(data)); // Send value through NRF24L01
   }
-  //delay(100);
+  radio.read
   sleeping();
 }
