@@ -119,7 +119,8 @@ void loop(void) {
     data.Temperature = temp;
     data.Motion_no = data.Motion_no+1;
     radio.write(&data, sizeof(data)); // Send value through NRF24L01
+    radio.read(&data, sizeof(data)); // Read information from the NRF24L01
   }
-  radio.read
+  
   sleeping();
 }
