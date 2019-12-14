@@ -2,9 +2,9 @@
   Living Room: Radio 1 = 00001
   Bedroom    : Radio 2 = 00002
 **/
-const int RC_number = 1;
+const int RC_number = 2;
 
-const float Target_temp = 21;
+float Target_temp = 21;
 
 
 #include "nRF24L01.h" //NRF24L01 library created by TMRh20 https://github.com/TMRh20/RF24
@@ -15,11 +15,12 @@ const float Target_temp = 21;
 #include <avr/wdt.h>
 
 #define PIR 8 // Arcade switch is connected to Pin 8 on NANO
+#define ThermPin A0
 
 RF24 radio(9, 10); // NRF24L01 used SPI pins + Pin 9 and 10 on the NANO
 
 const byte address_in[6]  = "00011";
-const byte address_out[6] = "00001";// Needs to be the same for communicating between 2 NRF24L01
+const byte address_out[6] = "00002";// Needs to be the same for communicating between 2 NRF24L01
 
 
 typedef struct {
@@ -29,17 +30,21 @@ typedef struct {
   int Motion_no; // time count since last detection (no x 8 sec)
 } Data;
 
-Data data = {RC_number, 24.3, Target_temp};
+Data data = {RC_number, 0, Target_temp};
 int Return = 0;
 
 String RC = " RC: ";
 String Temp = " Temperature: ";
 String Target = " Target: ";
 String out;
-float temp = 24.5;
 bool Motion = false;
 
 volatile int f_wdt = 1;
+
+int Vo;
+float R1 = 10000;
+float logR2, R2, T, Tc;
+float c1 = 1.009249522e-03, c2 = 2.378405444e-04, c3 = 2.019202697e-07;
 
 ISR(WDT_vect)
 {
@@ -65,7 +70,7 @@ void setup(void) {
   radio.setPALevel(RF24_PA_HIGH);
   radio.openReadingPipe(1, address_in); // Get NRF24L01 ready to receive
   radio.stopListening(); // Listen to see if information received
-  power_adc_disable(); // ADC converter
+  //power_adc_disable(); // ADC converter
   //power_usart0_disable();// Serial (USART)
   power_timer1_disable();// Timer 1
   power_timer2_disable();// Timer 2
@@ -89,12 +94,19 @@ void setup(void) {
 }
 
 void loop(void) {
-
+  Vo = analogRead(ThermPin);
+  R2 = R1 * (1023.0 / (float)Vo - 1.0);
+  logR2 = log(R2);
+  T = (1.0 / (c1 + c2 * logR2 + c3 * logR2 * logR2 * logR2));
+  Tc = T - 273.15;
+  data.Temperature = Tc;
+  Serial.println(data.Temperature);
+  
   if (digitalRead(PIR) == HIGH)
   { // If Switch is Activated
-    data.Temperature = temp;
+
     data.Motion_no = 0;
-    //Serial.println("on");
+    Serial.println("motion");
     radio.write(&data, sizeof(data)); // Send value through NRF24L01
     Motion = true;
     delay(250);
@@ -102,7 +114,7 @@ void loop(void) {
   }
   else if (Motion)
   {
-    data.Temperature = temp;
+
     data.Motion_no = data.Motion_no + 1;
     Serial.println("no motion");
     radio.write(&data, sizeof(data)); // Send value through NRF24L01
@@ -113,7 +125,7 @@ void loop(void) {
     {
       radio.read(&Return, sizeof(Return)); // Read information from the NRF24L01
       delay(2000);
-      
+
       if (Return == RC_number)
       {
         Motion = false;
