@@ -1,6 +1,6 @@
 /**
-  Living Room: Radio 1 = 00001
-  Bedroom    : Radio 2 = 00002
+  Living Room: Radio 1
+  Bedroom    : Radio 2
 **/
 const int RC_number = 2;
 
@@ -19,15 +19,16 @@ float Target_temp = 21;
 
 RF24 radio(9, 10); // NRF24L01 used SPI pins + Pin 9 and 10 on the NANO
 
-const byte address_in[6]  = "00011";
-const byte address_out[6] = "00002";// Needs to be the same for communicating between 2 NRF24L01
+const uint64_t rAddress[] = {0x7878787878LL, 0xB3B4B5B6F1LL, 0xB3B4B5B6CDLL, 0xB3B4B5B6A3LL, 0xB3B4B5B60FLL, 0xB3B4B5B605LL };
 
+const uint64_t address_out = rAddress[RC_number];// Needs to be the same for communicating between 2 NRF24L01
+const uint64_t address_in = rAddress[0];
 
 typedef struct {
   int RC_no;
   float Temperature;
   float Target;
-  int Motion_no; // time count since last detection (no x 8 sec)
+  int Motion_no; // time count since last detection (no x 4.5 sec)
 } Data;
 
 Data data = {RC_number, 0, Target_temp};
@@ -65,8 +66,9 @@ void setup(void) {
 
   Serial.begin(9600);
   radio.begin(); // Start the NRF24L01
+  radio.setChannel(108);
   radio.openWritingPipe(address_out); // Get NRF24L01 ready to transmit
-
+  radio.setDataRate(RF24_250KBPS);
   radio.setPALevel(RF24_PA_HIGH);
   radio.openReadingPipe(1, address_in); // Get NRF24L01 ready to receive
   radio.stopListening(); // Listen to see if information received
@@ -87,7 +89,7 @@ void setup(void) {
   WDTCSR |= (1 << WDCE) | (1 << WDE);
 
   /* set new watchdog timeout prescaler value */
-  WDTCSR = 1 << WDP0 | 1 << WDP3; /* 8.0 seconds */
+  WDTCSR = 1 << WDP3; /* 4.0 seconds */
 
   /* Enable the WD interrupt (note no reset). */
   WDTCSR |= _BV(WDIE);
@@ -100,8 +102,7 @@ void loop(void) {
   T = (1.0 / (c1 + c2 * logR2 + c3 * logR2 * logR2 * logR2));
   Tc = T - 273.15;
   data.Temperature = Tc;
-  Serial.println(data.Temperature);
-  
+
   if (digitalRead(PIR) == HIGH)
   { // If Switch is Activated
 
@@ -118,24 +119,28 @@ void loop(void) {
     data.Motion_no = data.Motion_no + 1;
     Serial.println("no motion");
     radio.write(&data, sizeof(data)); // Send value through NRF24L01
-    delay(4000);
+    delay(500);
     radio.startListening();
-    delay(2000);
-    if (radio.available(address_in))//
+    delay(500);
+    radio.read(&Return, sizeof(Return)); // Read information from the NRF24L01
+    delay(500);
+    radio.read(&Return, sizeof(Return)); // Read information from the NRF24L01
+    delay(500);
+    radio.read(&Return, sizeof(Return)); // Read information from the NRF24L01
+    if (Return == 1)
     {
-      radio.read(&Return, sizeof(Return)); // Read information from the NRF24L01
-      delay(2000);
-
-      if (Return == RC_number)
-      {
-        Motion = false;
-      }
+      Motion = false;
+    }
+    else 
+    {
       Return = 0;
     }
+
     radio.stopListening();
+    delay(2000);
   }
   out = Return + RC + data.RC_no + Temp + data.Temperature + Target + data.Target;
-  //Serial.println(out);
-  delay(50);
+  Serial.println(out);
+  delay(250);
 
 }
