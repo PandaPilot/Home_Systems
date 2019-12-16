@@ -1,11 +1,11 @@
 /**************************
- Program for Bathroom occupied light
- At start up:
+  Program for Bathroom occupied light
+  At start up:
     Light on (as precaution) while PIR sensor initialises
- If motion detected:
+  If motion detected:
     Light on for specified wait time (or until door opens, breaking the circuit)
     Flashes after specific time until further motion detected   (in case of false positives)
- (else) if motion not detected:
+  (else) if motion not detected:
     Light off and check constantly for motion   (in case of false negatives)
     After 50s check after every sleep cycle (8s)  (shut down to save power)
  ****************************/
@@ -22,7 +22,7 @@ int wait =  round(15 * 60 / 8);       // wait time (min*60/8) if no motion after
 int counter = 0;
 bool Initialised = false;
 bool Motion = false;
-
+int i = 0;
 /***************************************************
     Name:        ISR(WDT_vect)
 
@@ -82,9 +82,16 @@ void loop() {
   {
     digitalWrite(LED, HIGH);      // turn LED ON
     //Serial.print("initialising");
-    sleeping();
+    delay(4000);
     Initialised = true;
     //Serial.print("initialisd");
+    while (i < 30)
+    {
+      digitalWrite(LED, !digitalRead(LED));
+      delay(1000);
+      i++;
+      if (digitalRead(PIR) == HIGH){break;}
+    }
   }
 
   if (digitalRead(PIR) == HIGH)
@@ -105,11 +112,11 @@ void loop() {
   else
   {
     digitalWrite(LED, LOW);       // turn LED OFF
-    if (counter>5)
+    if (counter > 5)
     {
-    sleeping(); // check motion periodically, tune PIR for delay longer than 8s
+      sleeping(); // check motion periodically, tune PIR for delay longer than 8s
     }
-    counter=counter+1;
+    counter = counter + 1;
   }
 
 }
