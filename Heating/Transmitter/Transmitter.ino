@@ -14,6 +14,7 @@ float Target_temp = 21;
 #include <avr/sleep.h>
 #include <avr/wdt.h>
 
+#define RedLED 7
 #define PIR 8 // Arcade switch is connected to Pin 8 on NANO
 #define ThermPin A0
 
@@ -65,6 +66,7 @@ void sleeping()
 void setup(void) {
 
   Serial.begin(9600);
+  pinMode(RedLED, OUTPUT);
   radio.begin(); // Start the NRF24L01
   radio.setChannel(108);
   radio.openWritingPipe(address_out); // Get NRF24L01 ready to transmit
@@ -131,7 +133,7 @@ void loop(void) {
     {
       Motion = false;
     }
-    else 
+    else
     {
       Return = 0;
     }
@@ -139,6 +141,15 @@ void loop(void) {
     radio.stopListening();
     delay(2000);
   }
+  if (Motion && Tc < Target_temp)
+  { 
+    digitalWrite(RedLED, HIGH);
+  }
+  else
+  {
+    digitalWrite(RedLED, LOW);
+  }
+  
   out = Return + RC + data.RC_no + Temp + data.Temperature + Target + data.Target;
   Serial.println(out);
   delay(250);
