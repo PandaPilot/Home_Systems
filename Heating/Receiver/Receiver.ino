@@ -81,11 +81,11 @@ void loop(void) {
 
 
 
-    if (control.Temperature < control.Target)
+    if (control.Temperature-1 < control.Target)
     {
       digitalWrite(RelayPin, HIGH);
     }
-    else if (control.Temperature > control.Target + 0.5)
+    else if (control.Temperature > control.Target + 1.5)
     {
       digitalWrite(RelayPin, LOW);
     }

@@ -85,10 +85,10 @@ void loop() {
     delay(4000);
     Initialised = true;
     //Serial.print("initialisd");
-    while (i < 30)
+    while (i < 60)
     {
       digitalWrite(LED, !digitalRead(LED));
-      delay(1000);
+      delay(500);
       i++;
       if (digitalRead(PIR) == HIGH){break;}
     }
