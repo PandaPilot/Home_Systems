@@ -60,7 +60,7 @@ void loop(void) {
       if (i + 1 == data[0].RC_no)
       {
         data[i + 1] = data[0];
-        
+
         /* controlled temp zone selector */
         if (((data[i + 1].Motion_no > -1) && (data[i + 1].RC_no != control.RC_no)) && (control.Motion_no > (data[i + 1].Motion_no + 15))) // if data valid and isnt the current tx and current zone larger than buffer
         {
@@ -76,16 +76,16 @@ void loop(void) {
         //if (data[i + 1].RC_no != control.RC_no) {Serial.println("truth 2");}
         //if (control.Motion_no > (data[i + 1].Motion_no + 15)) {Serial.println("truth 3");}
       }
-      Serial.println(i+1);
+      Serial.println(i + 1);
     }
 
 
 
-    if (control.Temperature-1 < control.Target)
+    if (control.Temperature - 1 < control.Target)
     {
       digitalWrite(RelayPin, HIGH);
     }
-    else if (control.Temperature > control.Target + 1.5)
+    else if (control.Temperature >= control.Target + 1.0)
     {
       digitalWrite(RelayPin, LOW);
     }
@@ -93,7 +93,7 @@ void loop(void) {
     Serial.println(out);
     controlled = RC + control.RC_no + Temp + control.Temperature + Target + control.Target + Motion + control.Motion_no;
     Serial.println(controlled);
-    
+
     if (control.Motion_no == 0)
     {
       delay(250);
@@ -122,6 +122,7 @@ void loop(void) {
   {
     Serial.println("Not Connected");
     control = {0, 10.0, 0.0, 32767};
+    digitalWrite(RelayPin, LOW);
     delay(4000);
   }
 
