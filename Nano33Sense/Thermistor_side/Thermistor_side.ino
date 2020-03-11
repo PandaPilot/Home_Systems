@@ -3,7 +3,7 @@
 #include <Arduino_HTS221.h>
 
 BLEService tempService("1101");
-BLEUnsignedCharCharacteristic tempChar("2101", BLERead | BLENotify);
+BLEFloatCharacteristic tempChar("2101", BLERead | BLENotify);
 
 void setup() {
   // put your setup code here, to run once:
@@ -41,7 +41,7 @@ void loop() {
     digitalWrite(LED_BUILTIN, HIGH);
 
     while (central.connected()) {
-
+      Serial.println(central.address());
       float temp = HTS.readTemperature();
       Serial.print("Temperature: ");
       Serial.println(temp);
