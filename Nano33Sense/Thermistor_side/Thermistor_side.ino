@@ -3,7 +3,7 @@
 #include <Arduino_HTS221.h>
 
 BLEService tempService("1101");
-BLEFloatCharacteristic tempChar("2101", BLERead | BLENotify);
+BLECharCharacteristic tempChar("2101", BLERead | BLENotify);
 
 void setup() {
   // put your setup code here, to run once:

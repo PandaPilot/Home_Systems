@@ -5,7 +5,7 @@ const int buttonPin = 2;
 int oldButtonState = LOW;
 
 float temp = 100;
-
+uint8_t temp_b;
 void setup() {
   Serial.begin(9600);
 
@@ -14,19 +14,17 @@ void setup() {
 
   // initialize the BLE hardware
   BLE.begin();
-
+  
   Serial.println("BLE Central - LED control");
 
-  // start scanning for peripherals
-  BLE.scanForUuid("1101");
-
 }
-String address = BLE.address();
+
 void loop() {
   // check if a peripheral has been discovered
-
+  String address = BLE.address();
   Serial.print("Local address is: ");
   Serial.println(address);
+  
   BLE.scanForUuid("1101");
 
   BLEDevice peripheral = BLE.available();
@@ -60,9 +58,9 @@ void loop() {
       Serial.println("subscription failed!");
       return;
     }
-    //TempCharacteristic.readValue(temp);
+    TempCharacteristic.readValue(temp_b);
     Serial.print("Temp: ");
-    Serial.println(temp);
+    Serial.println(temp_b);
     // stop scanning
     BLE.stopScan();
     // peripheral disconnected, start scanning again
